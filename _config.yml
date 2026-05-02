@@ -1,0 +1,10 @@
+title: GitHub Pages Guide
+description: From zero to a live website — using GitHub's free static site hosting.
+remote_theme: pages-themes/cayman@v0.2.0
+
+markdown: kramdown
+highlighter: rouge
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag

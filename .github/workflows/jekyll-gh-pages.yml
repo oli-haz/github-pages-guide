@@ -1,0 +1,55 @@
+# Workflow to build and deploy a Jekyll (Markdown) site to GitHub Pages
+name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+
+# TRIGGER: when does this workflow run?
+on:
+  # Automatically runs every time you push to the main branch
+  push:
+    branches: ["main"]
+
+  # Also lets you manually trigger it from the GitHub Actions tab
+  workflow_dispatch:
+
+# PERMISSIONS: what is this workflow allowed to do on GitHub?
+permissions:
+  contents: read   # Read your repository files
+  pages: write     # Publish to GitHub Pages
+  id-token: write  # Verify the deployment identity (required by GitHub Pages)
+
+# CONCURRENCY: prevent multiple deployments running at the same time
+concurrency:
+  group: "pages"           # All "pages" deployments share one slot
+  cancel-in-progress: false # Don't cancel a deploy already in progress; wait for it to finish
+
+jobs:
+
+  # JOB 1 — BUILD: convert Markdown files to HTML using Jekyll
+  build:
+    runs-on: ubuntu-latest  # Run on a fresh Ubuntu virtual machine provided by GitHub
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4         # Step 1: Download your repo's code onto the runner
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5  # Step 2: Configure Jekyll settings for GitHub Pages (sets base URL etc.)
+
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1  # Step 3: Run Jekyll to convert .md + _config.yml → HTML
+        with:
+          source: ./       # Read source files from the repo root
+          destination: ./_site  # Output the built HTML into the _site/ folder
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3  # Step 4: Package the _site/ folder and hand it to the deploy job
+
+  # JOB 2 — DEPLOY: publish the built HTML to GitHub Pages
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}  # The live URL shown in GitHub after deploy
+    runs-on: ubuntu-latest
+    needs: build  # Wait for the build job to finish before running this
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5  # Takes the artifact from the build job and publishes it live
